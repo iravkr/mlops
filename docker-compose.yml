@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  audio-sentiment-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: audio-sentiment-model:latest
+    container_name: audio-sentiment-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app/src
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    
+  mlflow:
+    image: python:3.9-slim
+    container_name: mlflow-server
+    ports:
+      - "5001:5001"
+    working_dir: /mlflow
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+      - ./mlflow.db:/mlflow/mlflow.db
+    command: >
+      bash -c "
+        pip install mlflow &&
+        mlflow server 
+          --backend-store-uri sqlite:///mlflow.db 
+          --default-artifact-root ./mlruns 
+          --host 0.0.0.0 
+          --port 5001
+      "
+    restart: unless-stopped
+
+  # Remove monitoring dashboard until we have actual Streamlit dashboard
+  # monitoring-dashboard:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile
+  #   image: audio-sentiment-model:latest
+  #   container_name: monitoring-dashboard
+  #   ports:
+  #     - "8501:8501"
+  #   command: streamlit run src/monitoring/dashboard.py --server.port 8501 --server.address 0.0.0.0
+  #   depends_on:
+  #     - audio-sentiment-api
+  #   restart: unless-stopped
