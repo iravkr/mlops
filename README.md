@@ -321,6 +321,3 @@ GET /model/info
 
 ---
 
-🎯 **This project demonstrates production-ready MLOps practices suitable for enterprise deployment and real-world audio sentiment analysis applications.**
-
-
